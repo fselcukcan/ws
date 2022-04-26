@@ -55,19 +55,30 @@
 
         const ws = new WebSocket(`ws://${location.host}`);
         
-        ws.onmessage = function(event) {
-          const data = JSON.parse(event.data);
-          
-          rss.textContent = data.rss;
-          heapTotal.textContent = data.heapTotal;
-          heapUsed.textContent = data.heapUsed;
-          external.textContent = data.external;
-        };
-        
         ws.onopen = function (event) {
           // when connection to websocket server is opne you can emit any event with the following mentohd and signature.
           ws.emit('someEventName', {a: 1, b: 2});
         }
+
+        ws.onmessage = function(event) {
+          const data = JSON.parse(event.data);
+          const {eventName, payload} = data;
+          const customEvent = new CustomEvent(eventName, {detail: payload});
+          ws.dispatchEvent(customEvent);
+        };
+
+        ws.addEventListener("someEvent", function (event) {
+          console.log("someEvent event happened. event: ", event);
+        });
+
+        ws.addEventListener("memoryUsage", function (event) {
+          console.log("memoryUsage event happened. event: ", event);
+          rss.textContent = event.detail.rss;
+          heapTotal.textContent = event.detail.heapTotal;
+          heapUsed.textContent = event.detail.heapUsed;
+          external.textContent = event.detail.external;
+        });
+        
       })();
 
     </script>
